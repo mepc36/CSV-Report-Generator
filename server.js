@@ -2,11 +2,10 @@ const express = require('express');
 const app = express();
 const port = 3000;
 const bodyParser = require('body-parser');
+const fs = require('fs');
 
 app.use(bodyParser.urlencoded({ extended: false }));
-
 app.listen(port, () => console.log(`Example app listening on port ${port}!`));
-
 app.use(express.static('client'));
 
 app.post('/upload_json', (req, res) => {
@@ -14,18 +13,6 @@ app.post('/upload_json', (req, res) => {
   var flatString = "";
 
   var parsed = JSON.parse(req.body.data);
-
-  // Transform a nested object into a flattened string that lists the shared values of 
-  // every key in chronological order.
-
-  // I. — an object
-  // O. — a string that looks like: 
-  // firstName,lastName,county,city,role,sales,\n,Joshie,Wyattson,San Mateo,San Mateo,Broker,1000000,Beth Jr.,Johnson,San Mateo,Pacifica,Manager,2900000,\n, [etc.]
-  // C. — 
-  // E. — 
-  
-  // parsed — OBJECT
-  // req.body.data — STRING
 
   var getKeys = function(getKeys) {
     for (var key in getKeys) {
@@ -54,8 +41,29 @@ app.post('/upload_json', (req, res) => {
 
   getKeys(parsed);
   getValues(parsed);
+
+  fs.writeFile('test.csv', flatString, (error) => {
+    if (error) {
+      throw error
+    } else {
+      console.log('Saving file!')
+    }
+  })
   
-  res.setHeader('Content-disposition', 'attachment; filename=testing.csv');
+  res.setHeader('Content-disposition', 'attachment; filename=report.csv');
   res.set('Content-Type', 'text/csv');
   res.status(200).send(flatString);
 });
+
+app.get('/download', (req, res) => {
+  fs.readFile('test.csv', function(error, data) {
+    if (error) {
+      console.log('error', error)
+    } else {
+      console.log('Sending file back!');
+      res.setHeader('Content-disposition', 'attachment; filename=report.csv');
+      res.set('Content-Type', 'text/csv');
+      res.status(200).send(data);
+    }
+  });
+})
